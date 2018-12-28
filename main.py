@@ -1,6 +1,13 @@
 #Efrat Sofer 304855125
 import sys
 import math
+''''
+class Tree:
+  def __init__(self):
+    self.root = 
+    self.age = age
+'''
+
 '''
 main function: gets the name of the input file- if not received then print error and return.
 o.w continues to build the DTL tree
@@ -29,6 +36,19 @@ def main():
             possible_att_values[att[j]].add(splitted_line[j])
     print("finished iterating the examples and finding the possible values of attributes, starting creating tree")
     DTL(input_lines, possible_att_values.keys(), False, possible_att_values)
+
+    #get KNN predictions values
+    try:
+        #read input file
+        test_file_name = sys.argv[2]
+        print("got input file")
+    except(ValueError, IndexError):
+        print("no input file given")
+        test_file_name = 'test.txt'
+    test_file = open(test_file_name, 'r')
+    test_lines = test_file.read().splitlines()
+    knn_pred = KNN(5, test_lines, input_lines)
+
 
 
 def DTL(examples, attributes, def_ret_val, possible_att_values):
@@ -109,8 +129,8 @@ def entropy(examples):
         elif key.lower() == 'no':
             answer_no = counter_for_answer[key]
             answer_no /= total_examples
-        else:
-            print("got more than 2 possible answers!\nanswer is: " + key)
+     #  else:
+           # print("got more than 2 possible answers!\nanswer is: " + key)
     result = -1*(answer_yes)*math.log2(answer_yes) -1*(answer_no)*math.log2(answer_no)
     return result
 
@@ -143,8 +163,55 @@ def informationGain(examples, specific_att, att_vals):
     return total_val
 
 
-def KNN(number_of_neighbors):
-    print("in KNN")
+def hammingDist(line1, line2):
+    line_sep = '\t'
+    dist = 0
+    splitted_line1 = line1.split(line_sep)
+    splitted_line2 = line2.split(line_sep)
+    for i in range(0, len(splitted_line1) - 1):#last value is the classification
+        if splitted_line1[i] != splitted_line2[i]:
+            dist += 1
+    return dist
+
+def KNN(number_of_neighbors, test_data, input_data):
+    result_classification = []
+    split_char = '\t'
+    for i in range(1, len(test_data)):
+        hamming_dist = []
+        ind = []
+        classifications = []
+        for j in range(1, len(input_data)): #first line is the classification
+            distance = hammingDist(test_data[i], input_data[j])
+            hamming_dist.append(distance)
+            ind.append(j)
+
+        #select top neighbors
+        for k in range(0, number_of_neighbors):
+            min_ind = hamming_dist.index(min(hamming_dist))
+            min_ind_index_in_input = ind[min_ind]
+            selected_line = input_data[min_ind_index_in_input]
+            splitted_line = selected_line.split(split_char)
+            classifications.append(splitted_line[-1])
+            hamming_dist.pop(min_ind)
+            ind.pop(min_ind)
+        #select majority answer
+        threshold = float(number_of_neighbors)/2.0
+        answer = classifications[0]
+        counter_answer = 1
+        other_answer = None
+        for k in range(1, len(classifications)):
+            if classifications[k] == answer:
+                counter_answer += 1
+            else:
+                other_answer = classifications[k]
+        if counter_answer > threshold:
+            result_classification.append(answer)
+        else:
+            result_classification.append(other_answer)
+
+    return result_classification
+
+
 
 def naiveBase():
     print("in naive base")
