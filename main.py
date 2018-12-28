@@ -40,7 +40,7 @@ def DTL(examples, attributes, def_ret_val, possible_att_values):
     elif len(attributes) == 0:
         return examples_has_same_val[1]
     else:
-        best_att = chooseBestAttribute(examples, attributes)
+        best_att = chooseBestAttribute(examples, attributes, possible_att_values)
         print("chose best attribute: " + best_att)
         att_vals = possible_att_values[best_att]
         for value in att_vals:
@@ -59,7 +59,7 @@ def checkExamplesAnswer(examples):
     counter_for_answer = {}
     majority_val = 0
     majority_ans = None
-    for i in range(0, len(examples)):
+    for i in range(1, len(examples)):#first line has the attributes names
         splitted_line = examples[i].split(line_sep)
         answer = splitted_line[-1]
         if answer not in counter_for_answer:
@@ -135,8 +135,8 @@ def selectExamplesWithAttVal(examples, att, att_val):
 def informationGain(examples, specific_att, att_vals):
     entropy_data = entropy(examples)
     total_val = entropy_data
-    possible_values = att_vals[specific_att]
-    for value in possible_values:
+    #possible_values = att_vals[specific_att]
+    for value in att_vals:
         sub_examples = selectExamplesWithAttVal(examples, specific_att, value)
         att_val_ent = entropy(sub_examples)
         total_val -= (len(sub_examples)/len(examples))*att_val_ent
