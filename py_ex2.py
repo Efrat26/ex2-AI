@@ -1,6 +1,7 @@
 #Efrat Sofer 304855125
 import sys
 import math
+from collections import defaultdict
 ''''
 class Tree:
   def __init__(self):
@@ -22,6 +23,7 @@ def main():
         print("no input file given")
         return
     possible_att_values = {}
+    classification_options_count = {}
     line_sep = '\t'
     input_lines = input_file.read().splitlines()
     att = input_lines[0].split(line_sep)
@@ -34,6 +36,10 @@ def main():
         splitted_line = input_lines[i].split(line_sep)
         for j in range(0, len(att)):
             possible_att_values[att[j]].add(splitted_line[j])
+        if splitted_line[-1] in classification_options_count:
+            classification_options_count[splitted_line[-1]] += 1
+        else:
+            classification_options_count[splitted_line[-1]] = 0
     print("finished iterating the examples and finding the possible values of attributes, starting creating tree")
     DTL(input_lines, possible_att_values.keys(), False, possible_att_values)
 
@@ -48,6 +54,9 @@ def main():
     test_file = open(test_file_name, 'r')
     test_lines = test_file.read().splitlines()
     knn_pred = KNN(5, test_lines, input_lines)
+
+    #get naive bayes classification
+    nb_pred = naiveBayes(input_lines, test_lines, possible_att_values, classification_options_count)
 
 
 
@@ -213,8 +222,54 @@ def KNN(number_of_neighbors, test_data, input_data):
 
 
 
-def naiveBase():
-    print("in naive base")
+def naiveBayes(input_lines, result_lines, att_dict, classification_opt_count_dict):
+    line_sep = '\t'
+    result_classifications = []
+    count_dict = preprocessNaiveBayse(input_lines)
+    total_examples = len(input_lines) - 1
+    #map index to attribute name:
+    index_to_att = {}
+    splitted_line = input_lines[0].split(line_sep)
+    for i in range(0, len(splitted_line) -1):
+        index_to_att[i] = splitted_line[i]
+    # for each test line find the probability
+    for i in range(1, len(result_lines)):  # first line doesn't count
+        splitted_line = result_lines[i].split(line_sep)
+        class_results = []
+        c = []
+        result_mult = 1
+        for classification in classification_opt_count_dict:
+            classification = classification.lower()
+            for j in range(0, len(splitted_line)-1):
+                conditioned_key = splitted_line[j] + '|'+ classification
+                att_name = index_to_att[j]
+                temp = (count_dict[conditioned_key] + 1) / (count_dict[classification] + len(att_dict[att_name]))#with smoothing
+                result_mult *= temp
+            p_c = count_dict[classification] / total_examples
+            result = result_mult*p_c
+            class_results.append(result)
+            c.append(classification)
+        #find max classification
+        max_ind = class_results.index(max(class_results))
+        result_classifications.append(c[max_ind])
+    return result_classifications
+
+def preprocessNaiveBayse(input_lines):
+    result_dict = defaultdict(int)
+    split_char = '\t'
+    for i in range(1, len(input_lines)):
+        splitted_line = input_lines[i].split(split_char)
+        for j in range(0, len(splitted_line)):
+            result_dict[splitted_line[j]] += 1
+            if j < len(splitted_line)-1:
+                condioned_key = splitted_line[j] + "|" + splitted_line[-1].lower()
+                result_dict[condioned_key] += 1
+    return result_dict
+
+
+
+
+
 
 if __name__ == "__main__":
     main()
