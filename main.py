@@ -27,12 +27,11 @@ def main():
         splitted_line = input_lines[i].split(line_sep)
         for j in range(0, len(att)):
             possible_att_values[att[j]].add(splitted_line[j])
-    print("finished iterating the examples and finding the possible values of attributes")
+    print("finished iterating the examples and finding the possible values of attributes, starting creating tree")
+    DTL(input_lines, possible_att_values.keys(), False, possible_att_values)
 
-def ID3():
-    print("in ID3")
 
-def DTL(examples, attributes, def_ret_val):
+def DTL(examples, attributes, def_ret_val, possible_att_values):
     if len(examples) == 0:
         return def_ret_val
     examples_has_same_val = checkExamplesAnswer(examples)
@@ -42,8 +41,13 @@ def DTL(examples, attributes, def_ret_val):
         return examples_has_same_val[1]
     else:
         best_att = chooseBestAttribute(examples, attributes)
+        print("chose best attribute: " + best_att)
+        att_vals = possible_att_values[best_att]
+        for value in att_vals:
+            sub_examples = selectExamplesWithAttVal(examples, best_att, value)
+            print("getting subtree of attribute value: " + value)
+        print("returning subtree")
 
-    print("in DTL")
 
 ''' 
 counts the number of votes for each answer. at the end check if the dictionary has only one key (means all answers are
@@ -72,8 +76,16 @@ def checkExamplesAnswer(examples):
         return [False, majority_ans]
 
 
-def chooseBestAttribute(examples, attributes):
+def chooseBestAttribute(examples, attributes, att_vals_dict):
+    IG_val = None
+    best_att = None
     for att in attributes:
+        result = informationGain(examples, att, att_vals_dict[att])
+        if IG_val == None or result > IG_val:
+            IG_val = result
+            best_att = att
+    return best_att
+
 
     print("in chooseBestAttribute")
 
@@ -103,8 +115,33 @@ def entropy(examples):
     return result
 
 
-def informationGain():
-    print("in information gain")
+def selectExamplesWithAttVal(examples, att, att_val):
+    line_sep = '\t'
+    result = []
+    att_index = 0
+    splitted_line = examples[0].split(line_sep)
+    for i in range(0,len(splitted_line)):
+        if splitted_line[i] == att:
+            att_index = i
+            break
+    for example in examples:
+        splitted_example = example.split(line_sep)
+        if splitted_example[att_index] == att_val:
+            result.append(example)
+    return result
+
+
+
+def informationGain(examples, specific_att, att_vals):
+    entropy_data = entropy(examples)
+    total_val = entropy_data
+    possible_values = att_vals[specific_att]
+    for value in possible_values:
+        sub_examples = selectExamplesWithAttVal(examples, specific_att, value)
+        att_val_ent = entropy(sub_examples)
+        total_val -= (len(sub_examples)/len(examples))*att_val_ent
+    return total_val
+
 
 def KNN(number_of_neighbors):
     print("in KNN")
