@@ -2,19 +2,18 @@
 import sys
 import math
 from collections import defaultdict
-''''
-class Tree:
+
+class Node:
   def __init__(self):
-    self.root = 
-    self.age = age
-'''
+    self.child = None
+    self.value = None
+
 
 '''
 main function: gets the name of the input file- if not received then print error and return.
 o.w continues to build the DTL tree
 '''
 def main():
-    #print("Hello World!")
     try:
         #read input file
         input_file = open(sys.argv[1], 'r')
@@ -41,7 +40,9 @@ def main():
         else:
             classification_options_count[splitted_line[-1]] = 0
     print("finished iterating the examples and finding the possible values of attributes, starting creating tree")
-    #DTL(input_lines, possible_att_values.keys(), False, possible_att_values)
+    input_lines_copy = input_lines.copy()
+    input_lines_copy.pop(0)
+    DTL(input_lines_copy, possible_att_values.keys(), False, possible_att_values)
 
     #get KNN predictions values
     try:
@@ -124,8 +125,7 @@ def entropy(examples):
     line_sep = '\t'
     counter_for_answer = {}
     total_examples = len(examples)
-    answer_yes = 0
-    answer_no = 0
+    result = 0
     for i in range(0, len(examples)):
         splitted_line = examples[i].split(line_sep)
         answer = splitted_line[-1]
@@ -134,15 +134,9 @@ def entropy(examples):
         else:
             counter_for_answer[answer] += 1
     for key in counter_for_answer:
-        if key.lower() == 'yes':
-            answer_yes = counter_for_answer[key]
-            answer_yes /= total_examples
-        elif key.lower() == 'no':
-            answer_no = counter_for_answer[key]
-            answer_no /= total_examples
-     #  else:
-           # print("got more than 2 possible answers!\nanswer is: " + key)
-    result = -1*(answer_yes)*math.log2(answer_yes) -1*(answer_no)*math.log2(answer_no)
+        counter_for_answer[key] = float(counter_for_answer[key])/float(total_examples)
+    for key in counter_for_answer:
+        result += -1*(counter_for_answer[key])*math.log2(counter_for_answer[key])
     return result
 
 
