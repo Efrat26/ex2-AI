@@ -3,10 +3,17 @@ import sys
 import math
 from collections import defaultdict
 
+
 class Node:
-  def __init__(self):
-    self.child = None
-    self.value = None
+    def __init__(self):
+        self.child = []
+        self.value = None
+
+    def addChild(self, c):
+        self.child.append(c)
+
+    def setValue(self, v):
+        self.value = v
 
 
 '''
@@ -42,7 +49,8 @@ def main():
     print("finished iterating the examples and finding the possible values of attributes, starting creating tree")
     input_lines_copy = input_lines.copy()
     input_lines_copy.pop(0)
-    DTL(input_lines_copy, possible_att_values.keys(), False, possible_att_values)
+    root = Node()
+    DTL(input_lines_copy, list(possible_att_values.keys()), False, possible_att_values, root)
 
     #get KNN predictions values
     try:
@@ -63,7 +71,7 @@ def main():
     calculateAccuracy(nb_pred, true_answers, "naive base")
 
 
-def DTL(examples, attributes, def_ret_val, possible_att_values):
+def DTL(examples, attributes, def_ret_val, possible_att_values, root_node):
     if len(examples) == 0:
         return def_ret_val
     examples_has_same_val = checkExamplesAnswer(examples)
@@ -77,8 +85,14 @@ def DTL(examples, attributes, def_ret_val, possible_att_values):
         att_vals = possible_att_values[best_att]
         for value in att_vals:
             sub_examples = selectExamplesWithAttVal(examples, best_att, value)
+            new_root_node = Node()
             print("getting subtree of attribute value: " + value)
-        print("returning subtree")
+            attributes_copy = attributes.copy()
+            attributes_copy.remove(best_att)
+            DTL(sub_examples, attributes_copy, examples_has_same_val[1], possible_att_values,  new_root_node)
+            root_node.addChild(new_root_node)
+
+        #print("returning subtree")
 
 
 ''' 
