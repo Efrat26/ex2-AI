@@ -41,21 +41,22 @@ def main():
         else:
             classification_options_count[splitted_line[-1]] = 0
     print("finished iterating the examples and finding the possible values of attributes, starting creating tree")
-    DTL(input_lines, possible_att_values.keys(), False, possible_att_values)
+    #DTL(input_lines, possible_att_values.keys(), False, possible_att_values)
 
     #get KNN predictions values
     try:
         #read input file
         test_file_name = sys.argv[2]
-        print("got input file")
+        print("got test file")
     except(ValueError, IndexError):
-        print("no input file given")
+        print("no test file given")
         test_file_name = 'test.txt'
     test_file = open(test_file_name, 'r')
     test_lines = test_file.read().splitlines()
-    knn_pred = KNN(5, test_lines, input_lines)
+    #knn_pred = KNN(5, test_lines, input_lines)
 
     #get naive bayes classification
+    #test_lines = test_file.read().splitlines()
     nb_pred = naiveBayes(input_lines, test_lines, possible_att_values, classification_options_count)
 
 
@@ -241,11 +242,14 @@ def naiveBayes(input_lines, result_lines, att_dict, classification_opt_count_dic
         for classification in classification_opt_count_dict:
             classification = classification.lower()
             for j in range(0, len(splitted_line)-1):
-                conditioned_key = splitted_line[j] + '|'+ classification
+                conditioned_key = splitted_line[j] + '|' + classification
                 att_name = index_to_att[j]
-                temp = (count_dict[conditioned_key] + 1) / (count_dict[classification] + len(att_dict[att_name]))#with smoothing
+                #temp = float((count_dict[conditioned_key] + 1)) / float((count_dict[classification] + len(att_dict[att_name])))#with smoothing
+                temp = float((count_dict[conditioned_key])) / float((count_dict[classification]))#with smoothing
+                if temp == 0:
+                    continue
                 result_mult *= temp
-            p_c = count_dict[classification] / total_examples
+            p_c = float(count_dict[classification]) / float(total_examples)
             result = result_mult*p_c
             class_results.append(result)
             c.append(classification)
@@ -265,11 +269,6 @@ def preprocessNaiveBayse(input_lines):
                 condioned_key = splitted_line[j] + "|" + splitted_line[-1].lower()
                 result_dict[condioned_key] += 1
     return result_dict
-
-
-
-
-
 
 if __name__ == "__main__":
     main()
