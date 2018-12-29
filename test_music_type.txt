@@ -1,2 +1,2 @@
 time	hw	p	music
-morning	yes	no	classical
+morning	hw_yes	p_no	classical

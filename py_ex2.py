@@ -53,12 +53,13 @@ def main():
         test_file_name = 'test.txt'
     test_file = open(test_file_name, 'r')
     test_lines = test_file.read().splitlines()
-    #knn_pred = KNN(5, test_lines, input_lines)
-
+    #get true answers
+    true_answers = getAnswersVector(test_lines)
+    knn_pred = KNN(5, test_lines, input_lines)
+    calculateAccuracy(knn_pred, true_answers, "KNN")
     #get naive bayes classification
-    #test_lines = test_file.read().splitlines()
     nb_pred = naiveBayes(input_lines, test_lines, possible_att_values, classification_options_count)
-
+    calculateAccuracy(nb_pred, true_answers, "naive base")
 
 
 def DTL(examples, attributes, def_ret_val, possible_att_values):
@@ -238,14 +239,14 @@ def naiveBayes(input_lines, result_lines, att_dict, classification_opt_count_dic
         splitted_line = result_lines[i].split(line_sep)
         class_results = []
         c = []
-        result_mult = 1
         for classification in classification_opt_count_dict:
+            result_mult = 1
             classification = classification.lower()
             for j in range(0, len(splitted_line)-1):
                 conditioned_key = splitted_line[j] + '|' + classification
                 att_name = index_to_att[j]
-                #temp = float((count_dict[conditioned_key] + 1)) / float((count_dict[classification] + len(att_dict[att_name])))#with smoothing
-                temp = float((count_dict[conditioned_key])) / float((count_dict[classification]))#with smoothing
+                temp = float((count_dict[conditioned_key] + 1)) / float((count_dict[classification] + len(att_dict[att_name])))#with smoothing
+                #temp = float((count_dict[conditioned_key])) / float((count_dict[classification]))#without smoothing
                 if temp == 0:
                     continue
                 result_mult *= temp
@@ -269,6 +270,28 @@ def preprocessNaiveBayse(input_lines):
                 condioned_key = splitted_line[j] + "|" + splitted_line[-1].lower()
                 result_dict[condioned_key] += 1
     return result_dict
+
+def calculateAccuracy(predicted_results, true_result, method):
+    if len(predicted_results) != len(true_result):
+        print("result vectors aren't the same length!")
+        return
+    correct_ans = 0
+    for i in range(0, len(predicted_results)):
+        if predicted_results[i] == true_result[i]:
+            correct_ans += 1
+    accuracy = (float(correct_ans) / float(len(predicted_results)))*100
+    print("accuracy percentage for method " + method + " is: " + str(accuracy))
+    return
+
+def getAnswersVector(lines):
+    line_sep = '\t'
+    result = []
+    for i in range(1, len(lines)):
+        splitted_line = lines[i].split('\t')
+        result.append(splitted_line[-1])
+    return result
+
+
 
 if __name__ == "__main__":
     main()
