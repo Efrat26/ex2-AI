@@ -8,12 +8,16 @@ class Node:
     def __init__(self):
         self.child = []
         self.value = None
+        self.decision = None
 
     def addChild(self, c):
         self.child.append(c)
 
     def setValue(self, v):
         self.value = v
+
+    def setDecision(self, d):
+        self.decision = d
 
 
 '''
@@ -30,6 +34,8 @@ def main():
         return
     possible_att_values = {}
     classification_options_count = {}
+    att_to_index = {}
+    counter = 0
     line_sep = '\t'
     input_lines = input_file.read().splitlines()
     att = input_lines[0].split(line_sep)
@@ -37,6 +43,8 @@ def main():
     #initialize dictionary keys with an empty set
     for attribute in att:
         possible_att_values[attribute] = set()
+        att_to_index[attribute] = counter
+        counter += 1
     #find possible values for each attribute
     for i in range(1, len(input_lines)):
         splitted_line = input_lines[i].split(line_sep)
@@ -50,7 +58,7 @@ def main():
     input_lines_copy = input_lines.copy()
     input_lines_copy.pop(0)
     root = Node()
-    DTL(input_lines_copy, list(possible_att_values.keys()), False, possible_att_values, root)
+    DTL(input_lines_copy, list(possible_att_values.keys()), False, possible_att_values, root, att_to_index)
 
     #get KNN predictions values
     try:
@@ -71,7 +79,7 @@ def main():
     calculateAccuracy(nb_pred, true_answers, "naive base")
 
 
-def DTL(examples, attributes, def_ret_val, possible_att_values, root_node):
+def DTL(examples, attributes, def_ret_val, possible_att_values, root_node, att_to_index_dict):
     if len(examples) == 0:
         return def_ret_val
     examples_has_same_val = checkExamplesAnswer(examples)
@@ -80,17 +88,26 @@ def DTL(examples, attributes, def_ret_val, possible_att_values, root_node):
     elif len(attributes) == 0:
         return examples_has_same_val[1]
     else:
-        best_att = chooseBestAttribute(examples, attributes, possible_att_values)
+        best_att = chooseBestAttribute(examples, attributes, possible_att_values, att_to_index_dict)
         print("chose best attribute: " + best_att)
         att_vals = possible_att_values[best_att]
+        root_node.setValue(best_att)
         for value in att_vals:
-            sub_examples = selectExamplesWithAttVal(examples, best_att, value)
-            new_root_node = Node()
-            print("getting subtree of attribute value: " + value)
+            sub_examples = selectExamplesWithAttVal(examples, best_att, value, att_to_index_dict)
+            #node for the value
+            new_root_node_value = Node()
+            new_root_node_value.setValue(value)
+            #node for sub tree
+            sub_tree_node = Node()
+            print("getting subtree of attribute value:  " + value)
             attributes_copy = attributes.copy()
             attributes_copy.remove(best_att)
-            DTL(sub_examples, attributes_copy, examples_has_same_val[1], possible_att_values,  new_root_node)
-            root_node.addChild(new_root_node)
+            ret_value = DTL(sub_examples, attributes_copy, examples_has_same_val[1], possible_att_values, sub_tree_node,
+                att_to_index_dict)
+            #if ret_value == True or ret_value == False:
+            sub_tree_node.decision = ret_value
+            new_root_node_value.addChild(sub_tree_node)
+            root_node.addChild(new_root_node_value)
 
         #print("returning subtree")
 
@@ -105,7 +122,7 @@ def checkExamplesAnswer(examples):
     counter_for_answer = {}
     majority_val = 0
     majority_ans = None
-    for i in range(1, len(examples)):#first line has the attributes names
+    for i in range(0, len(examples)):#first line has the attributes names
         splitted_line = examples[i].split(line_sep)
         answer = splitted_line[-1]
         if answer not in counter_for_answer:
@@ -113,7 +130,7 @@ def checkExamplesAnswer(examples):
         else:
             counter_for_answer[answer] += 1
     if len(counter_for_answer) == 1:
-        return [True, counter_for_answer.keys()]
+        return [True, answer]
     else:
         for key in counter_for_answer:
             if counter_for_answer[key] > majority_val:
@@ -122,11 +139,11 @@ def checkExamplesAnswer(examples):
         return [False, majority_ans]
 
 
-def chooseBestAttribute(examples, attributes, att_vals_dict):
+def chooseBestAttribute(examples, attributes, att_vals_dict, att_to_index_dict):
     IG_val = None
     best_att = None
     for att in attributes:
-        result = informationGain(examples, att, att_vals_dict[att])
+        result = informationGain(examples, att, att_vals_dict[att], att_to_index_dict)
         if IG_val == None or result > IG_val:
             IG_val = result
             best_att = att
@@ -154,15 +171,10 @@ def entropy(examples):
     return result
 
 
-def selectExamplesWithAttVal(examples, att, att_val):
+def selectExamplesWithAttVal(examples, att, att_val,att_to_index_dict):
     line_sep = '\t'
     result = []
-    att_index = 0
-    splitted_line = examples[0].split(line_sep)
-    for i in range(0,len(splitted_line)):
-        if splitted_line[i] == att:
-            att_index = i
-            break
+    att_index = att_to_index_dict[att]
     for example in examples:
         splitted_example = example.split(line_sep)
         if splitted_example[att_index] == att_val:
@@ -171,12 +183,12 @@ def selectExamplesWithAttVal(examples, att, att_val):
 
 
 
-def informationGain(examples, specific_att, att_vals):
+def informationGain(examples, specific_att, att_vals, att_to_index_dict):
     entropy_data = entropy(examples)
     total_val = entropy_data
     #possible_values = att_vals[specific_att]
     for value in att_vals:
-        sub_examples = selectExamplesWithAttVal(examples, specific_att, value)
+        sub_examples = selectExamplesWithAttVal(examples, specific_att, value, att_to_index_dict)
         att_val_ent = entropy(sub_examples)
         total_val -= (len(sub_examples)/len(examples))*att_val_ent
     return total_val
