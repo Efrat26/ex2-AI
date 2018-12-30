@@ -70,14 +70,21 @@ def main():
         test_file_name = 'test.txt'
     test_file = open(test_file_name, 'r')
     test_lines = test_file.read().splitlines()
+    test_lines_copy = test_lines.copy()
+    test_lines_copy.pop(0)
+    # predict according to tree
+    dtl_pred = predictDTLResults(test_lines_copy, att_to_index, root)
     #get true answers
-    true_answers = getAnswersVector(test_lines)
-    knn_pred = KNN(5, test_lines, input_lines)
-    calculateAccuracy(knn_pred, true_answers, "KNN")
+    true_answers = getAnswersVector(test_lines_copy)
+    knn_pred = KNN(5, test_lines_copy, input_lines)
+    knn_acc = calculateAccuracy(knn_pred, true_answers, "KNN")
     #get naive bayes classification
-    nb_pred = naiveBayes(input_lines, test_lines, possible_att_values, classification_options_count)
-    calculateAccuracy(nb_pred, true_answers, "naive base")
-
+    nb_pred = naiveBayes(input_lines, test_lines_copy, possible_att_values, classification_options_count)
+    nb_acc = calculateAccuracy(nb_pred, true_answers, "naive base")
+    #accuract for ID3:
+    dtl_acc = calculateAccuracy(dtl_pred, true_answers, "ID3")
+    #create output file for predictions:
+    createOutputFilePredictions(test_lines_copy, dtl_pred, knn_pred, nb_pred, dtl_acc, knn_acc, nb_acc)
 
 def DTL(examples, attributes, def_ret_val, possible_att_values, root_node, att_to_index_dict):
     if len(examples) == 0:
@@ -204,10 +211,47 @@ def hammingDist(line1, line2):
             dist += 1
     return dist
 
+
+def predictDTLResults(test_data, att_to_index_dict, root):
+    result_predictions = []
+    stop = False
+    split_char = '\t'
+    for sentence in test_data:
+        splitted_sentence = sentence.split(split_char)
+        current_node = root
+        stop = False
+        while not stop:
+            if current_node.decision != None:
+                stop = True
+                result_predictions.append(current_node.decision)
+            else:
+                # means we need to choose the child node with the value in the sentence's value
+                if current_node.value in att_to_index_dict:
+                    for i in range(0, len(current_node.child)):
+                        child_node = current_node.child[i]
+                        if child_node.value == splitted_sentence[att_to_index_dict[current_node.value]]:
+                            current_node = child_node
+                            break
+                else:
+                    current_node = current_node.child[0]
+
+    return result_predictions
+
+def createOutputFilePredictions(test_lines, dt_pred, knn_pred, naive_base_pred, dt_acc, knn_acc, nb_acc):
+    output_file = open('output.txt', 'w')
+    line = 'Num\tDT\tKNN\tnaiveBase\n'
+    output_file.write(line)
+    for i in range(0,len(test_lines)):
+        line = str(i+1) + '\t'+ dt_pred[i]+'\t'+knn_pred[i]+'\t'+naive_base_pred[i]+'\n'
+        output_file.write(line)
+    line = '\t' + "%.2f" % dt_acc + '\t' + "%.2f" % knn_acc + '\t' + "%.2f" % nb_acc + '\n'
+    output_file.write(line)
+    return
+
 def KNN(number_of_neighbors, test_data, input_data):
     result_classification = []
     split_char = '\t'
-    for i in range(1, len(test_data)):
+    for i in range(0, len(test_data)):
         hamming_dist = []
         ind = []
         classifications = []
@@ -255,7 +299,7 @@ def naiveBayes(input_lines, result_lines, att_dict, classification_opt_count_dic
     for i in range(0, len(splitted_line) -1):
         index_to_att[i] = splitted_line[i]
     # for each test line find the probability
-    for i in range(1, len(result_lines)):  # first line doesn't count
+    for i in range(0, len(result_lines)):  # first line doesn't count
         splitted_line = result_lines[i].split(line_sep)
         class_results = []
         c = []
@@ -301,17 +345,21 @@ def calculateAccuracy(predicted_results, true_result, method):
             correct_ans += 1
     accuracy = (float(correct_ans) / float(len(predicted_results)))*100
     print("accuracy percentage for method " + method + " is: " + str(accuracy))
-    return
+    return accuracy
 
 def getAnswersVector(lines):
     line_sep = '\t'
     result = []
-    for i in range(1, len(lines)):
+    for i in range(0, len(lines)):
         splitted_line = lines[i].split('\t')
         result.append(splitted_line[-1])
     return result
 
-
+def printTree(root):
+    output_file = open('output_tree.txt', 'w')
+    att_name = root.value
+    root_child = root.child.copy()
+    
 
 if __name__ == "__main__":
     main()
