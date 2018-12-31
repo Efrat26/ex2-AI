@@ -9,6 +9,7 @@ class Node:
         self.child = []
         self.value = None
         self.decision = None
+        self.discovered = False
 
     def addChild(self, c):
         self.child.append(c)
@@ -18,6 +19,9 @@ class Node:
 
     def setDecision(self, d):
         self.decision = d
+
+    def setDiscovered(self):
+        self.discovered = True
 
 
 '''
@@ -58,6 +62,7 @@ def main():
     input_lines_copy = input_lines.copy()
     input_lines_copy.pop(0)
     root = Node()
+    #TODO: change the default value false to the mojority answer
     DTL(input_lines_copy, list(possible_att_values.keys()), False, possible_att_values, root, att_to_index)
 
     #get KNN predictions values
@@ -85,6 +90,7 @@ def main():
     dtl_acc = calculateAccuracy(dtl_pred, true_answers, "ID3")
     #create output file for predictions:
     createOutputFilePredictions(test_lines_copy, dtl_pred, knn_pred, nb_pred, dtl_acc, knn_acc, nb_acc)
+    printTree(root, possible_att_values)
 
 def DTL(examples, attributes, def_ret_val, possible_att_values, root_node, att_to_index_dict):
     if len(examples) == 0:
@@ -355,11 +361,35 @@ def getAnswersVector(lines):
         result.append(splitted_line[-1])
     return result
 
-def printTree(root):
+def printTree(root, possible_att_values):
     output_file = open('output_tree.txt', 'w')
-    att_name = root.value
-    root_child = root.child.copy()
-    
+    if root == None:
+        return
+    stack_list = []
+    stack_list.append(root)
+    result = ''
+    while stack_list.__len__() != 0:
+        current_element = stack_list.pop()
+        #print(current_element.value)
+        if current_element.discovered == False:
+            current_element.setDiscovered()
+            if current_element.value == None:#apperently a decision
+                result += ':' + current_element.decision +'\n'
+            elif current_element.value in possible_att_values:#is an attribute
+                result += current_element.value + '='
+            else:#is an atrribute value
+                result += current_element.value
+                if current_element.child[0].value != None:#after that value there's another attribute
+                    result += '\n\t|'
+            if len(current_element.child) > 0:
+                for child in current_element.child:
+                    stack_list.append(child)
+    print(result)
+
+
+
+
+
 
 if __name__ == "__main__":
     main()
