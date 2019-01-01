@@ -3,7 +3,11 @@ import sys
 import math
 from collections import defaultdict
 
-
+''''
+node class for the DTL: each node has a list of children nodes, value (which can be the attribute name/value or None),
+decision (the classification, only for leaves nodes), discovered - a bool for the DFS used for printing the tree and 
+depth which is also used for printing the tree.
+'''
 class Node:
     def __init__(self):
         self.child = []
@@ -97,6 +101,10 @@ def main():
     createOutputFilePredictions(test_lines_copy, dtl_pred, knn_pred, nb_pred, dtl_acc, knn_acc, nb_acc)
     printTree(root, possible_att_values)
 
+
+''''
+DTL implementation (as in presentation) 
+'''
 def DTL(examples, attributes, def_ret_val, possible_att_values, root_node, att_to_index_dict):
     if len(examples) == 0:
         return def_ret_val
@@ -159,6 +167,10 @@ def checkExamplesAnswer(examples):
         return [False, majority_ans]
 
 
+
+''''
+select the best attribute by taking the one with the highest information gain.
+'''
 def chooseBestAttribute(examples, attributes, att_vals_dict, att_to_index_dict):
     IG_val = None
     best_att = None
@@ -172,6 +184,10 @@ def chooseBestAttribute(examples, attributes, att_vals_dict, att_to_index_dict):
 
     print("in chooseBestAttribute")
 
+
+'''
+calculation of entropy (it is for multi class and not only for binary)
+'''
 def entropy(examples):
     line_sep = '\t'
     counter_for_answer = {}
@@ -191,6 +207,9 @@ def entropy(examples):
     return result
 
 
+'''
+returns a sub set of the examples with the attribute value given.
+'''
 def selectExamplesWithAttVal(examples, att, att_val,att_to_index_dict):
     line_sep = '\t'
     result = []
@@ -202,7 +221,9 @@ def selectExamplesWithAttVal(examples, att, att_val,att_to_index_dict):
     return result
 
 
-
+''''
+information gain calculation: selects the examples with an attribute value and sends to a method to calculate entropy.
+'''
 def informationGain(examples, specific_att, att_vals, att_to_index_dict):
     entropy_data = entropy(examples)
     total_val = entropy_data
@@ -213,7 +234,9 @@ def informationGain(examples, specific_att, att_vals, att_to_index_dict):
         total_val -= (len(sub_examples)/len(examples))*att_val_ent
     return total_val
 
-
+'''
+calculation of hamming distance: value to value, means that if the values aren't the same it would add 1 to the distance
+'''
 def hammingDist(line1, line2):
     line_sep = '\t'
     dist = 0
@@ -225,6 +248,10 @@ def hammingDist(line1, line2):
     return dist
 
 
+'''
+a method to predict result of the DTL tree: it goes over each line and goes over the nodes until it gets a node
+with decision.
+'''
 def predictDTLResults(test_data, att_to_index_dict, root):
     result_predictions = []
     stop = False
@@ -250,6 +277,10 @@ def predictDTLResults(test_data, att_to_index_dict, root):
 
     return result_predictions
 
+
+''''
+creates an output file with predictions as requested in the instructions.
+'''
 def createOutputFilePredictions(test_lines, dt_pred, knn_pred, naive_base_pred, dt_acc, knn_acc, nb_acc):
     output_file = open('output.txt', 'w')
     line = 'Num\tDT\tKNN\tnaiveBase\n'
@@ -261,6 +292,12 @@ def createOutputFilePredictions(test_lines, dt_pred, knn_pred, naive_base_pred, 
     output_file.write(line)
     return
 
+
+'''
+KNN algorithm calculation using hamming distance (value to value, means that if the values aren't the same it would add
+1 to the distance) and 5 neighbors. 
+
+'''
 def KNN(number_of_neighbors, test_data, input_data):
     result_classification = []
     split_char = '\t'
@@ -299,7 +336,10 @@ def KNN(number_of_neighbors, test_data, input_data):
 
     return result_classification
 
-
+'''
+naive base algorithm calculation: goes over results for each possible classification and takes the higher one.
+if the results are the same it would take the majority_answer (which given as a parameter).
+'''
 
 def naiveBayes(input_lines, result_lines, att_dict, classification_opt_count_dict, majority_answer):
     line_sep = '\t'
@@ -339,6 +379,10 @@ def naiveBayes(input_lines, result_lines, att_dict, classification_opt_count_dic
             result_classifications.append(c[max_ind])
     return result_classifications
 
+
+'''
+preprocess to the NB algorithm: counts the events and put it in a dictionary
+'''
 def preprocessNaiveBayse(input_lines):
     result_dict = defaultdict(int)
     split_char = '\t'
@@ -351,6 +395,10 @@ def preprocessNaiveBayse(input_lines):
                 result_dict[condioned_key] += 1
     return result_dict
 
+
+''''
+calculate accuracy of results
+'''
 def calculateAccuracy(predicted_results, true_result, method):
     if len(predicted_results) != len(true_result):
         print("result vectors aren't the same length!")
@@ -363,6 +411,10 @@ def calculateAccuracy(predicted_results, true_result, method):
     print("accuracy percentage for method " + method + " is: " + str(accuracy))
     return accuracy
 
+
+'''
+returns a vector with the answers (as the answers are the last element of the line)
+'''
 def getAnswersVector(lines):
     line_sep = '\t'
     result = []
@@ -371,6 +423,10 @@ def getAnswersVector(lines):
         result.append(splitted_line[-1])
     return result
 
+
+''''
+creates a dictionary where the keys are the attributes values and the values are the attribute name
+'''
 def createValueToAtrributeDict(att_to_val_dict):
     result = {}
     for key in att_to_val_dict:
@@ -379,8 +435,13 @@ def createValueToAtrributeDict(att_to_val_dict):
             result[item] = key
     return result
 
-def getChildrenInAlphabeticOrder(children_nodes_list):
-    #new_children_list = []
+
+''''
+input: a list with nodes 
+return: a list of nodes ordered in alphabetic order.
+if there are values that start with digit, they will be moved to the end of the list.
+'''
+def orderNodesInAlphabeticOrder(children_nodes_list):
     temp = []
     new_children_list = sorted(children_nodes_list, key=lambda x: x.value)
     for i in range(0, len(new_children_list)):
@@ -397,7 +458,9 @@ def getChildrenInAlphabeticOrder(children_nodes_list):
 
 
 
-
+'''
+printing tree using DFS. the number of tabs is as the depth of the node.
+'''
 def printTree(root, possible_att_values):
     value_to_att_dict = createValueToAtrributeDict(possible_att_values)
     output_file = open('output_tree.txt', 'w')
@@ -412,26 +475,21 @@ def printTree(root, possible_att_values):
         #print(current_element.value)
         if current_element.discovered == False:
             current_element.setDiscovered()
-            if current_element.value == None:#apperently a decision
+            if current_element.value == None:#node is a decision
                 result += ':' + current_element.decision +'\n'
-            #elif current_element.value in possible_att_values:#is an attribute
-               # result += current_element.value + '='
             elif current_element.value not in possible_att_values:#is an atrribute value
                 #for the tabs:
                 if current_element.depth > 1:
                     for i in range(0, current_element.depth):
                         result += '\t'
-                #if current_element.depth > 0:
                     result += '|'
                 result += value_to_att_dict[current_element.value] + '=' + current_element.value
                 if current_element.child[0].value != None:
                     result += '\n'
-                #if current_element.child[0].value != None:#after that value there's another attribute
-                    #result += '\n\t|'
             if len(current_element.child) > 0:
-                #put the children in alphabetic order
+                #put the children in reversed alphabetic order (because it's a stack)
                 if len(current_element.child) >  1:
-                    sorted_list = getChildrenInAlphabeticOrder(current_element.child)
+                    sorted_list = orderNodesInAlphabeticOrder(current_element.child)
                     sorted_list.reverse()
                 else:
                     sorted_list = current_element.child
