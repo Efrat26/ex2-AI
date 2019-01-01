@@ -66,8 +66,8 @@ def main():
     input_lines_copy = input_lines.copy()
     input_lines_copy.pop(0)
     root = Node()
-    #TODO: change the default value false to the mojority answer
-    DTL(input_lines_copy, list(possible_att_values.keys()), False, possible_att_values, root, att_to_index)
+    majority_answer = checkExamplesAnswer(input_lines_copy)
+    DTL(input_lines_copy, list(possible_att_values.keys()), majority_answer[1], possible_att_values, root, att_to_index)
 
     #get KNN predictions values
     try:
@@ -88,7 +88,8 @@ def main():
     knn_pred = KNN(5, test_lines_copy, input_lines)
     knn_acc = calculateAccuracy(knn_pred, true_answers, "KNN")
     #get naive bayes classification
-    nb_pred = naiveBayes(input_lines, test_lines_copy, possible_att_values, classification_options_count)
+    nb_pred = naiveBayes(input_lines, test_lines_copy, possible_att_values, classification_options_count,
+                         majority_answer[1])
     nb_acc = calculateAccuracy(nb_pred, true_answers, "naive base")
     #accuract for ID3:
     dtl_acc = calculateAccuracy(dtl_pred, true_answers, "ID3")
@@ -110,6 +111,8 @@ def DTL(examples, attributes, def_ret_val, possible_att_values, root_node, att_t
         att_vals = possible_att_values[best_att]
         root_node.setValue(best_att)
         for value in att_vals:
+            #if value == '1st':
+                #print('yo')
             sub_examples = selectExamplesWithAttVal(examples, best_att, value, att_to_index_dict)
             #node for the value
             new_root_node_value = Node()
@@ -139,7 +142,7 @@ def checkExamplesAnswer(examples):
     counter_for_answer = {}
     majority_val = 0
     majority_ans = None
-    for i in range(0, len(examples)):#first line has the attributes names
+    for i in range(0, len(examples)):
         splitted_line = examples[i].split(line_sep)
         answer = splitted_line[-1]
         if answer not in counter_for_answer:
@@ -298,7 +301,7 @@ def KNN(number_of_neighbors, test_data, input_data):
 
 
 
-def naiveBayes(input_lines, result_lines, att_dict, classification_opt_count_dict):
+def naiveBayes(input_lines, result_lines, att_dict, classification_opt_count_dict, majority_answer):
     line_sep = '\t'
     result_classifications = []
     count_dict = preprocessNaiveBayse(input_lines)
@@ -329,8 +332,11 @@ def naiveBayes(input_lines, result_lines, att_dict, classification_opt_count_dic
             class_results.append(result)
             c.append(classification)
         #find max classification
-        max_ind = class_results.index(max(class_results))#TODO: handle the case of equal probability values
-        result_classifications.append(c[max_ind])
+        if all(x == class_results[0] for x in class_results):
+            result_classifications.append(majority_answer)
+        else:
+            max_ind = class_results.index(max(class_results))
+            result_classifications.append(c[max_ind])
     return result_classifications
 
 def preprocessNaiveBayse(input_lines):
@@ -433,6 +439,9 @@ def printTree(root, possible_att_values):
                     stack_list.append(child)
                     if child.depth == None:
                         child.setDepth(current_element.depth + 1)
+
+    result = result[:-1]
+    output_file.write(result)
     print(result)
 
 
