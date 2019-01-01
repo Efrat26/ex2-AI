@@ -52,6 +52,7 @@ def main():
     input_lines = input_file.read().splitlines()
     att = input_lines[0].split(line_sep)
     att.pop()#remove last attribute which is the classification
+
     #initialize dictionary keys with an empty set
     for attribute in att:
         possible_att_values[attribute] = set()
@@ -100,7 +101,6 @@ def main():
     #create output file for predictions:
     createOutputFilePredictions(test_lines_copy, dtl_pred, knn_pred, nb_pred, dtl_acc, knn_acc, nb_acc)
     printTree(root, possible_att_values)
-
 
 ''''
 DTL implementation (as in presentation) 
@@ -348,11 +348,11 @@ def naiveBayes(input_lines, result_lines, att_dict, classification_opt_count_dic
     total_examples = len(input_lines) - 1
     #map index to attribute name:
     index_to_att = {}
-    splitted_line = input_lines[0].split(line_sep)
-    for i in range(0, len(splitted_line) -1):
-        index_to_att[i] = splitted_line[i]
+    att_row = input_lines[0].split(line_sep)
+    for i in range(0, len(att_row) -1):
+        index_to_att[i] = att_row[i]
     # for each test line find the probability
-    for i in range(0, len(result_lines)):  # first line doesn't count
+    for i in range(0, len(result_lines)):
         splitted_line = result_lines[i].split(line_sep)
         class_results = []
         c = []
@@ -360,14 +360,15 @@ def naiveBayes(input_lines, result_lines, att_dict, classification_opt_count_dic
             result_mult = 1
             classification = classification.lower()
             for j in range(0, len(splitted_line)-1):
-                conditioned_key = splitted_line[j] + '|' + classification
+                conditioned_key = att_row[j] + '_' +splitted_line[j] + '|' + classification
                 att_name = index_to_att[j]
-                temp = float((count_dict[conditioned_key] + 1)) / float((count_dict[classification] + len(att_dict[att_name])))#with smoothing
+                temp = float((count_dict[conditioned_key] + 1)) / float((count_dict[att_row[-1] + '_' +classification] +
+                                                                         len(att_dict[att_name])))#with smoothing
                 #temp = float((count_dict[conditioned_key])) / float((count_dict[classification]))#without smoothing
                 if temp == 0:
                     continue
                 result_mult *= temp
-            p_c = float(count_dict[classification]) / float(total_examples)
+            p_c = float(count_dict[att_row[-1] + '_' + classification]) / float(total_examples)
             result = result_mult*p_c
             class_results.append(result)
             c.append(classification)
@@ -386,12 +387,14 @@ preprocess to the NB algorithm: counts the events and put it in a dictionary
 def preprocessNaiveBayse(input_lines):
     result_dict = defaultdict(int)
     split_char = '\t'
+    att_name = input_lines[0].split(split_char)
     for i in range(1, len(input_lines)):
         splitted_line = input_lines[i].split(split_char)
         for j in range(0, len(splitted_line)):
+            splitted_line[j] = att_name[j] + '_' + splitted_line[j]
             result_dict[splitted_line[j]] += 1
             if j < len(splitted_line)-1:
-                condioned_key = splitted_line[j] + "|" + splitted_line[-1].lower()
+                condioned_key = splitted_line[j] + '|' + splitted_line[-1].lower()
                 result_dict[condioned_key] += 1
     return result_dict
 
@@ -501,10 +504,6 @@ def printTree(root, possible_att_values):
     result = result[:-1]
     output_file.write(result)
     print(result)
-
-
-
-
 
 
 if __name__ == "__main__":
