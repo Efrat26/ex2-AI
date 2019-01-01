@@ -10,6 +10,7 @@ class Node:
         self.value = None
         self.decision = None
         self.discovered = False
+        self.depth = None
 
     def addChild(self, c):
         self.child.append(c)
@@ -22,6 +23,9 @@ class Node:
 
     def setDiscovered(self):
         self.discovered = True
+
+    def setDepth(self, d):
+        self.depth = d
 
 
 '''
@@ -325,7 +329,7 @@ def naiveBayes(input_lines, result_lines, att_dict, classification_opt_count_dic
             class_results.append(result)
             c.append(classification)
         #find max classification
-        max_ind = class_results.index(max(class_results))
+        max_ind = class_results.index(max(class_results))#TODO: handle the case of equal probability values
         result_classifications.append(c[max_ind])
     return result_classifications
 
@@ -361,13 +365,24 @@ def getAnswersVector(lines):
         result.append(splitted_line[-1])
     return result
 
+def createValueToAtrributeDict(att_to_val_dict):
+    result = {}
+    for key in att_to_val_dict:
+        list_of_vals = att_to_val_dict[key]
+        for item in list_of_vals:
+            result[item] = key
+    return result
+
+
 def printTree(root, possible_att_values):
+    value_to_att_dict = createValueToAtrributeDict(possible_att_values)
     output_file = open('output_tree.txt', 'w')
     if root == None:
         return
     stack_list = []
     stack_list.append(root)
     result = ''
+    root.setDepth(0)
     while stack_list.__len__() != 0:
         current_element = stack_list.pop()
         #print(current_element.value)
@@ -375,15 +390,25 @@ def printTree(root, possible_att_values):
             current_element.setDiscovered()
             if current_element.value == None:#apperently a decision
                 result += ':' + current_element.decision +'\n'
-            elif current_element.value in possible_att_values:#is an attribute
-                result += current_element.value + '='
-            else:#is an atrribute value
-                result += current_element.value
-                if current_element.child[0].value != None:#after that value there's another attribute
-                    result += '\n\t|'
+            #elif current_element.value in possible_att_values:#is an attribute
+               # result += current_element.value + '='
+            elif current_element.value not in possible_att_values:#is an atrribute value
+                #for the tabs:
+                if current_element.depth > 1:
+                    for i in range(0, current_element.depth):
+                        result += '\t'
+                #if current_element.depth > 0:
+                    result += '|'
+                result += value_to_att_dict[current_element.value] + '=' + current_element.value
+                if current_element.child[0].value != None:
+                    result += '\n'
+                #if current_element.child[0].value != None:#after that value there's another attribute
+                    #result += '\n\t|'
             if len(current_element.child) > 0:
                 for child in current_element.child:
                     stack_list.append(child)
+                    if child.depth == None:
+                        child.setDepth(current_element.depth + 1)
     print(result)
 
 
