@@ -373,6 +373,24 @@ def createValueToAtrributeDict(att_to_val_dict):
             result[item] = key
     return result
 
+def getChildrenInAlphabeticOrder(children_nodes_list):
+    #new_children_list = []
+    temp = []
+    new_children_list = sorted(children_nodes_list, key=lambda x: x.value)
+    for i in range(0, len(new_children_list)):
+        child = new_children_list[i]
+        if child.value[0].isdigit():
+            temp.append(child)
+        else:
+            break
+    for j in range(0, i):
+        new_children_list.pop(0)
+        new_children_list.append(temp[j])
+
+    return new_children_list
+
+
+
 
 def printTree(root, possible_att_values):
     value_to_att_dict = createValueToAtrributeDict(possible_att_values)
@@ -405,7 +423,13 @@ def printTree(root, possible_att_values):
                 #if current_element.child[0].value != None:#after that value there's another attribute
                     #result += '\n\t|'
             if len(current_element.child) > 0:
-                for child in current_element.child:
+                #put the children in alphabetic order
+                if len(current_element.child) >  1:
+                    sorted_list = getChildrenInAlphabeticOrder(current_element.child)
+                    sorted_list.reverse()
+                else:
+                    sorted_list = current_element.child
+                for child in sorted_list:
                     stack_list.append(child)
                     if child.depth == None:
                         child.setDepth(current_element.depth + 1)
