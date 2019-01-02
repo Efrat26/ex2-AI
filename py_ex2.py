@@ -37,13 +37,8 @@ main function: gets the name of the input file- if not received then print error
 o.w continues to build the DTL tree
 '''
 def main():
-    try:
-        #read input file
-        input_file = open(sys.argv[1], 'r')
-        print("got input file")
-    except(ValueError, IndexError):
-        print("no input file given")
-        return
+    input_file_name = 'train.txt'
+    input_file = open(input_file_name, 'r')
     possible_att_values = {}
     classification_options_count = {}
     att_to_index = {}
@@ -67,21 +62,15 @@ def main():
             classification_options_count[splitted_line[-1]] += 1
         else:
             classification_options_count[splitted_line[-1]] = 0
-    print("finished iterating the examples and finding the possible values of attributes, starting creating tree")
+    #print("finished iterating the examples and finding the possible values of attributes, starting creating tree")
     input_lines_copy = input_lines.copy()
     input_lines_copy.pop(0)
     root = Node()
     majority_answer = checkExamplesAnswer(input_lines_copy)
     DTL(input_lines_copy, list(possible_att_values.keys()), majority_answer[1], possible_att_values, root, att_to_index)
 
-    #get KNN predictions values
-    try:
-        #read input file
-        test_file_name = sys.argv[2]
-        print("got test file")
-    except(ValueError, IndexError):
-        print("no test file given")
-        test_file_name = 'test.txt'
+
+    test_file_name = 'test.txt'
     test_file = open(test_file_name, 'r')
     test_lines = test_file.read().splitlines()
     test_lines_copy = test_lines.copy()
@@ -115,7 +104,7 @@ def DTL(examples, attributes, def_ret_val, possible_att_values, root_node, att_t
         return examples_has_same_val[1]
     else:
         best_att = chooseBestAttribute(examples, attributes, possible_att_values, att_to_index_dict)
-        print("chose best attribute: " + best_att)
+        #print("chose best attribute: " + best_att)
         att_vals = possible_att_values[best_att]
         root_node.setValue(best_att)
         for value in att_vals:
@@ -127,7 +116,7 @@ def DTL(examples, attributes, def_ret_val, possible_att_values, root_node, att_t
             new_root_node_value.setValue(value)
             #node for sub tree
             sub_tree_node = Node()
-            print("getting subtree of attribute value:  " + value)
+            #print("getting subtree of attribute value:  " + value)
             attributes_copy = attributes.copy()
             attributes_copy.remove(best_att)
             ret_value = DTL(sub_examples, attributes_copy, examples_has_same_val[1], possible_att_values, sub_tree_node,
@@ -159,6 +148,13 @@ def checkExamplesAnswer(examples):
             counter_for_answer[answer] += 1
     if len(counter_for_answer) == 1:
         return [True, answer]
+    elif len(set(counter_for_answer.values()))==1:#all answers have the same number of counts
+        positive_values_option = ['1', 'true', 't', 'yes', 'y']
+        #choose the key with the positive answer
+        for key in counter_for_answer:
+            if key.lower() in positive_values_option:
+                return [False, key]
+        return [False, key]
     else:
         for key in counter_for_answer:
             if counter_for_answer[key] > majority_val:
@@ -182,7 +178,7 @@ def chooseBestAttribute(examples, attributes, att_vals_dict, att_to_index_dict):
     return best_att
 
 
-    print("in chooseBestAttribute")
+    #print("in chooseBestAttribute")
 
 
 '''
@@ -411,7 +407,7 @@ def calculateAccuracy(predicted_results, true_result, method):
         if predicted_results[i] == true_result[i]:
             correct_ans += 1
     accuracy = (float(correct_ans) / float(len(predicted_results)))*100
-    print("accuracy percentage for method " + method + " is: " + str(accuracy))
+    #print("accuracy percentage for method " + method + " is: " + str(accuracy))
     return accuracy
 
 
