@@ -406,7 +406,17 @@ def calculateAccuracy(predicted_results, true_result, method):
     for i in range(0, len(predicted_results)):
         if predicted_results[i] == true_result[i]:
             correct_ans += 1
-    accuracy = (float(correct_ans) / float(len(predicted_results)))*100
+    accuracy = (float(correct_ans) / float(len(predicted_results)))
+    #format(accuracy, '.2f')
+    #float(math.ceil(accuracy))
+    #accuracy = round(accuracy, 3)
+    #accuracy = float(math.ceil(accuracy))
+    accuracy = round(accuracy, 2)
+    #accuracy = float(math.ceil(accuracy))
+
+
+
+
     #print("accuracy percentage for method " + method + " is: " + str(accuracy))
     return accuracy
 
@@ -499,7 +509,7 @@ def printTree(root, possible_att_values):
 
     result = result[:-1]
     output_file.write(result)
-    print(result)
+    #print(result)
 
 
 if __name__ == "__main__":
