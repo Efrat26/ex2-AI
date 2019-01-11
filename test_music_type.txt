@@ -1,2 +1,0 @@
-time	hw	p	music
-morning	yes	no	classical

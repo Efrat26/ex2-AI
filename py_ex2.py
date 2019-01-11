@@ -15,6 +15,7 @@ class Node:
         self.decision = None
         self.discovered = False
         self.depth = None
+        self.attribute = None
 
     def addChild(self, c):
         self.child.append(c)
@@ -30,6 +31,9 @@ class Node:
 
     def setDepth(self, d):
         self.depth = d
+
+    def setAtt(self, att):
+        self.attribute = att
 
 
 '''
@@ -57,7 +61,10 @@ def main():
     for i in range(1, len(input_lines)):
         splitted_line = input_lines[i].split(line_sep)
         for j in range(0, len(att)):
-            possible_att_values[att[j]].add(splitted_line[j])
+            if splitted_line[j].lower() == 'weak':
+                print('hello')
+            if splitted_line[j] not in possible_att_values[att[j]]:
+                possible_att_values[att[j]].add(splitted_line[j])
         if splitted_line[-1] in classification_options_count:
             classification_options_count[splitted_line[-1]] += 1
         else:
@@ -68,7 +75,7 @@ def main():
     root = Node()
     majority_answer = checkExamplesAnswer(input_lines_copy)
     DTL(input_lines_copy, list(possible_att_values.keys()), majority_answer[1], possible_att_values, root, att_to_index)
-
+    #printTree(root, possible_att_values)
 
     test_file_name = 'test.txt'
     test_file = open(test_file_name, 'r')
@@ -89,6 +96,7 @@ def main():
     dtl_acc = calculateAccuracy(dtl_pred, true_answers, "ID3")
     #create output file for predictions:
     createOutputFilePredictions(test_lines_copy, dtl_pred, knn_pred, nb_pred, dtl_acc, knn_acc, nb_acc)
+
     printTree(root, possible_att_values)
 
 ''''
@@ -114,6 +122,7 @@ def DTL(examples, attributes, def_ret_val, possible_att_values, root_node, att_t
             #node for the value
             new_root_node_value = Node()
             new_root_node_value.setValue(value)
+            new_root_node_value.setAtt(best_att)
             #node for sub tree
             sub_tree_node = Node()
             #print("getting subtree of attribute value:  " + value)
@@ -407,15 +416,7 @@ def calculateAccuracy(predicted_results, true_result, method):
         if predicted_results[i] == true_result[i]:
             correct_ans += 1
     accuracy = (float(correct_ans) / float(len(predicted_results)))
-    #format(accuracy, '.2f')
-    #float(math.ceil(accuracy))
-    #accuracy = round(accuracy, 3)
-    #accuracy = float(math.ceil(accuracy))
-    accuracy = round(accuracy, 2)
-    #accuracy = float(math.ceil(accuracy))
-
-
-
+    accuracy = math.ceil(100*accuracy) / 100
 
     #print("accuracy percentage for method " + method + " is: " + str(accuracy))
     return accuracy
@@ -431,19 +432,6 @@ def getAnswersVector(lines):
         splitted_line = lines[i].split('\t')
         result.append(splitted_line[-1])
     return result
-
-
-''''
-creates a dictionary where the keys are the attributes values and the values are the attribute name
-'''
-def createValueToAtrributeDict(att_to_val_dict):
-    result = {}
-    for key in att_to_val_dict:
-        list_of_vals = att_to_val_dict[key]
-        for item in list_of_vals:
-            result[item] = key
-    return result
-
 
 ''''
 input: a list with nodes 
@@ -471,7 +459,7 @@ def orderNodesInAlphabeticOrder(children_nodes_list):
 printing tree using DFS. the number of tabs is as the depth of the node.
 '''
 def printTree(root, possible_att_values):
-    value_to_att_dict = createValueToAtrributeDict(possible_att_values)
+    #value_to_att_dict = createValueToAtrributeDict(possible_att_values)
     output_file = open('output_tree.txt', 'w')
     if root == None:
         return
@@ -492,7 +480,8 @@ def printTree(root, possible_att_values):
                     for i in range(0, current_element.depth):
                         result += '\t'
                     result += '|'
-                result += value_to_att_dict[current_element.value] + '=' + current_element.value
+                #result += value_to_att_dict[current_element.value] + '=' + current_element.value
+                result += current_element.attribute + '=' + current_element.value
                 if current_element.child[0].value != None:
                     result += '\n'
             if len(current_element.child) > 0:
