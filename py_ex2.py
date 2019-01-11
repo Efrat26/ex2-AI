@@ -487,9 +487,10 @@ def printTree(root, possible_att_values):
                 result += ':' + current_element.decision +'\n'
             elif current_element.value not in possible_att_values:#is an atrribute value
                 #for the tabs:
-                if current_element.depth > 1:
-                    for i in range(0, current_element.depth):
-                        result += '\t'
+                #if current_element.depth >= 1:
+                for i in range(0, current_element.depth):
+                    result += '\t'
+                if current_element.depth > 0:
                     result += '|'
                 #result += value_to_att_dict[current_element.value] + '=' + current_element.value
                 result += current_element.attribute + '=' + current_element.value
@@ -497,15 +498,19 @@ def printTree(root, possible_att_values):
                     result += '\n'
             if len(current_element.child) > 0:
                 #put the children in reversed alphabetic order (because it's a stack)
-                if len(current_element.child) >  1:
+                if len(current_element.child) > 1:
                     sorted_list = orderNodesInAlphabeticOrder(current_element.child)
                     sorted_list.reverse()
                 else:
                     sorted_list = current_element.child
                 for child in sorted_list:
                     stack_list.append(child)
-                    if child.depth == None:
+                    #if child.depth == None and child.value in possible_att_values:
+                    if child.value in possible_att_values:
                         child.setDepth(current_element.depth + 1)
+                    elif child.value not in possible_att_values:
+                        child.setDepth(current_element.depth)
+
 
     result = result[:-1]
     output_file.write(result)
