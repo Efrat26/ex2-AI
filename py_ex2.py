@@ -441,6 +441,17 @@ if there are values that start with digit, they will be moved to the end of the 
 def orderNodesInAlphabeticOrder(children_nodes_list):
     temp = []
     new_children_list = sorted(children_nodes_list, key=lambda x: x.value)
+    all_numbers = True
+    # in case all the values are numbers - not need to put them after alphabetic values (such as in the example given
+    # when crew need to be before the numbers
+    for i in range(0, len(new_children_list)):
+        child = new_children_list[i]
+        if child.value[0].isdigit() == False:
+            all_numbers = False
+            break
+    if all_numbers:
+        return new_children_list
+
     for i in range(0, len(new_children_list)):
         child = new_children_list[i]
         if child.value[0].isdigit():
